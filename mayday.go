@@ -3,6 +3,7 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -194,6 +195,10 @@ func getJournals(dir string) error {
 }
 
 func main() {
+	var unpacked bool
+	flag.BoolVar(&unpacked, "unpacked", false, "Keep mayday output unpacked")
+	flag.Parse()
+
 	now := time.Now().Format("200601021504-")
 	ws, err := ioutil.TempDir("", dirPrefix+now)
 	if err != nil {
@@ -232,20 +237,24 @@ func main() {
 		}
 	}
 
-	// Build the output tar file
-	tfn := ws + ".tar.gz"
-	f, err := os.OpenFile(tfn, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
-	if err != nil {
-		log.Fatalf("error opening file for output: %v", err)
+	if !unpacked {
+		// Build the output tar file
+		tfn := ws + ".tar.gz"
+		f, err := os.OpenFile(tfn, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
+		if err != nil {
+			log.Fatalf("error opening file for output: %v", err)
+		}
+		gzw := gzip.NewWriter(f)
+		if err := buildTarFile(gzw, ws); err != nil {
+			log.Fatal(err.Error())
+		}
+		if err := gzw.Close(); err != nil {
+			log.Fatalf("error closing zipfile: %v", err)
+		}
+		fmt.Printf("Output saved in %v\n", tfn)
+	} else {
+		fmt.Printf("Output saved in %v\n", ws)
 	}
-	gzw := gzip.NewWriter(f)
-	if err := buildTarFile(gzw, ws); err != nil {
-		log.Fatal(err.Error())
-	}
-	if err := gzw.Close(); err != nil {
-		log.Fatalf("error closing zipfile: %v", err)
-	}
-	fmt.Printf("Output saved in %v\n", tfn)
 	fmt.Println("All done!")
 }
 
