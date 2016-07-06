@@ -42,6 +42,7 @@ var (
 			Link: "mounts",
 		},
 	}
+
 	commands = []mayday.Command{
 		{
 			Args: []string{"hostname"},
@@ -216,6 +217,11 @@ func main() {
 	// TODO(jonboulle): parallelise
 	// TODO(jonboulle): handle errors
 	for _, f := range files {
+		f.Source, err = os.Open(f.Path)
+		if err != nil {
+			log.Fatalf("error opening source file: %v", err)
+		}
+
 		if err := f.Collect(ws); err != nil {
 			fmt.Println(err)
 		}

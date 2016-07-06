@@ -1,35 +1,50 @@
 package mayday_test
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/coreos/mayday/mayday"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNonexistentFile(t *testing.T) {
-	file := mayday.File{Path: "/etc/nonexistent"}
-	err := file.Collect(workspace)
-	assert.Equal(t, err.Error(), `error opening source file: open /etc/nonexistent: no such file or directory`)
+type tempReadCloser struct {
+	io.Reader
+}
+
+func (tempReadCloser) Close() error {
+	return nil
 }
 
 func TestFile(t *testing.T) {
-	file := mayday.File{Path: "/proc/meminfo"}
+
+	file := mayday.File{
+		Source: tempReadCloser{bytes.NewBufferString("contents1")},
+		Path:   os.TempDir() + "/file1",
+	}
+
 	res := file.Collect(workspace)
 	assert.Nil(t, res)
 
-	f, err := ioutil.ReadFile(workspace + "/proc/meminfo")
+	f, err := ioutil.ReadFile(workspace + os.TempDir() + "/file1")
 	assert.Nil(t, err)
-	assert.Contains(t, string(f), "MemTotal")
+	assert.Equal(t, string(f), "contents1")
 }
 
 func TestFileWithLink(t *testing.T) {
-	file := mayday.File{Path: "/etc/crontab", Link: "cronfig"}
+	file := mayday.File{
+		Source: tempReadCloser{bytes.NewBufferString("contents2")},
+		Path:   os.TempDir() + "/annoyingly_long_name",
+		Link:   "short",
+	}
+
 	res := file.Collect(workspace)
 	assert.Nil(t, res)
 
-	f, err := ioutil.ReadFile(workspace + "/cronfig")
+	f, err := ioutil.ReadFile(workspace + "/short")
 	assert.Nil(t, err)
-	assert.Contains(t, string(f), "crontab")
+	assert.Equal(t, string(f), "contents2")
 }
