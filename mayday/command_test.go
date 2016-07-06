@@ -2,32 +2,11 @@ package mayday_test
 
 import (
 	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/coreos/mayday/mayday"
 	"github.com/stretchr/testify/assert"
 )
-
-var workspace string
-
-func TestMain(m *testing.M) {
-	// test setup
-	// current_dir lives in /tmp/go-build
-	current_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	workspace = current_dir + "/mayday_test"
-	os.MkdirAll(workspace+"/mayday_commands", os.ModePerm)
-
-	retCode := m.Run()
-
-	os.Exit(retCode)
-}
 
 func TestNonexistentCommand(t *testing.T) {
 	cmd := mayday.Command{Args: []string{"nonexistent"}}
