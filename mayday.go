@@ -3,6 +3,7 @@ package main
 import (
 	"archive/tar"
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,9 +13,13 @@ import (
 	"github.com/coreos/mayday/mayday"
 )
 
+var (
+	flagConfigFile *string
+	danger     *bool
+)
+
 const (
 	dirPrefix     = "/mayday"
-	defaultConfig = "/etc/mayday.conf"
 )
 
 type File struct {
@@ -37,7 +42,7 @@ func openConfig() (string, error) {
 	configFile := strings.Split(configVar, "=")[0]
 
 	if configFile == "" {
-		configFile = defaultConfig
+		configFile = *flagConfigFile
 	}
 
 	log.Printf("Reading configuration from %v\n", configFile)
@@ -57,6 +62,10 @@ func readConfig(dat string) ([]File, []Command, error) {
 }
 
 func main() {
+	flagConfigFile = flag.String("config-file", "/etc/mayday.conf", "config file location")
+	danger = flag.Bool("danger", false, "collect potentially private information (ex, container logs)")
+
+	flag.Parse()
 
 	conf, err := openConfig()
 	if err != nil {
