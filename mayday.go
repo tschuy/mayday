@@ -126,7 +126,8 @@ func main() {
 
 	journals, err := journal.List()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Could not retreive system services. Skipping...")
+		log.Printf("Service error: %s", err)
 	}
 
 	pods, rktLogs, err := rkt.GetPods()
